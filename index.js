@@ -80,8 +80,11 @@ async function startWhatsApp() {
     try {
       console.log("MASUK EVENT");
       const msg = messages[0];
+      console.log(`INI MESSAGE : ${msg}`);
 
       if (!msg.message) return;
+      console.log(`msg.key.fromMe-${msg.key.fromMe}`);
+
       if (msg.key.fromMe) return;
 
       const jid = msg.key.remoteJid;
@@ -91,6 +94,7 @@ async function startWhatsApp() {
 
       const text =
         msg.message.conversation || msg.message.extendedTextMessage?.text;
+      console.log(`text - ${msg.key.fromMe}`);
 
       if (!text) return;
 
