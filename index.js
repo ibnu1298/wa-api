@@ -27,7 +27,7 @@ const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
-async function saveToSheet(data) {
+async function saveToSheet(data, senderNumber) {
   const client = await auth.getClient();
 
   const sheets = google.sheets({
@@ -38,7 +38,7 @@ async function saveToSheet(data) {
   const now = new Date().toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
   });
-  const senderNumber = extractNumber(jid);
+
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: "ReportSheet!A:F",
@@ -121,6 +121,7 @@ async function startWhatsApp() {
       if (msg.key.fromMe) return;
 
       const jid = msg.key.remoteJid;
+      const senderNumber = extractNumber(jid);
       const isPrivate = jid.includes("@s.whatsapp.net") || jid.includes("@lid");
 
       // hanya chat pribadi
@@ -166,7 +167,7 @@ async function startWhatsApp() {
       }
 
       try {
-        await saveToSheet(parsed);
+        await saveToSheet(parsed, senderNumber);
       } catch (err) {
         console.error("Gagal save:", err);
 
