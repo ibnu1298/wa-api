@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const {
   default: makeWASocket,
@@ -5,73 +7,25 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
 } = require("@whiskeysockets/baileys");
+
 const P = require("pino");
 const QRCode = require("qrcode-terminal");
-require("dotenv").config();
-const app = express();
-const fs = require("fs");
-const path = require("path");
 const multer = require("multer");
-const { google } = require("googleapis");
+const fs = require("fs");
+
+const { registerWhatsAppHandler } = require("./src/whatsapp/whatsapp.handler");
+
+const app = express();
 app.use(express.json());
 
-const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
-
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 let sock;
 let isReady = false;
+
 const upload = multer({
   dest: "uploads/",
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
-async function saveToSheet(data, senderNumber) {
-  const client = await auth.getClient();
 
-  const sheets = google.sheets({
-    version: "v4",
-    auth: client,
-  });
-
-  const now = new Date().toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-  });
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: "ReportSheet!A:F",
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [
-        [now, data.category, data.item, data.nominal, data.type, senderNumber],
-      ],
-    },
-  });
-}
-
-function extractNumber(jid) {
-  return jid.split("@")[0];
-}
-
-function parseMessage(text) {
-  const type = text[0];
-
-  if (type !== "+" && type !== "-") return null;
-
-  const content = text.slice(1);
-  const [item, nominal, category] = content.split(",");
-
-  if (!item || !nominal || !category) return null;
-
-  return {
-    item: item.trim(),
-    nominal: parseInt(nominal.trim()),
-    category: category.trim().toLowerCase(),
-    type: type === "+" ? "pemasukan" : "pengeluaran",
-  };
-}
 async function startWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState("session");
   const { version } = await fetchLatestBaileysVersion();
@@ -91,105 +45,33 @@ async function startWhatsApp() {
       console.log("Scan QR ini:");
       QRCode.generate(qr, { small: true });
     }
+
     if (connection === "open") {
       console.log("✅ WhatsApp Connected");
       isReady = true;
-      retryCount = 0;
     }
+
     if (connection === "close") {
       const shouldReconnect =
         lastDisconnect?.error?.output?.statusCode !==
         DisconnectReason.loggedOut;
+
       isReady = false;
       console.log("Koneksi terputus.");
-      if (shouldReconnect) {
-        startWhatsApp();
-      }
-    }
 
-    if (connection === "open") {
-      console.log("✅ WhatsApp connected");
+      if (shouldReconnect) startWhatsApp();
     }
   });
 
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    try {
-      const msg = messages[0];
-
-      if (!msg.message) return;
-
-      if (msg.key.fromMe) return;
-
-      const jid = msg.key.remoteJid;
-      const senderNumber = extractNumber(jid);
-      const isPrivate = jid.includes("@s.whatsapp.net") || jid.includes("@lid");
-
-      // hanya chat pribadi
-      if (!isPrivate) return;
-      const text =
-        msg.message?.conversation ||
-        msg.message?.extendedTextMessage?.text ||
-        msg.message?.ephemeralMessage?.message?.extendedTextMessage?.text;
-
-      if (!text) return;
-
-      // normalize
-      const lowerText = text.toLowerCase();
-
-      // cek prefix
-      if (!lowerText.startsWith("lapor")) return;
-
-      // ambil isi setelah "lapor"
-      const cleanText = text.slice(5).trim(); // 5 = panjang "lapor"
-      if (!text) return;
-
-      console.log("📩 Incoming:", text);
-
-      const parsed = parseMessage(cleanText);
-
-      const categories = process.env.CATEGORIES.split(",").map((c) =>
-        c.trim().toLowerCase(),
-      );
-
-      if (!parsed) {
-        await sock.sendMessage(jid, {
-          text: "Format salah.\nContoh:\nlapor +beli kopi,10000,makan",
-        });
-        return;
-      }
-      if (!categories.includes(parsed.category)) {
-        const list = categories.map((c) => `- ${c}`).join("\n");
-
-        await sock.sendMessage(jid, {
-          text: `❌ Kategori tidak valid.\n\nKategori tersedia:\n${list}`,
-        });
-        return;
-      }
-
-      try {
-        await saveToSheet(parsed, senderNumber);
-      } catch (err) {
-        console.error("Gagal save:", err);
-
-        await sock.sendMessage(jid, {
-          text: "❌ Gagal simpan ke Google Sheets",
-        });
-
-        return;
-      }
-      console.log(parsed);
-      await sock.sendMessage(jid, {
-        text: "✅ Data keuangan berhasil dicatat",
-      });
-    } catch (err) {
-      console.error("Error handle message:", err);
-    }
-  });
+  // 🔥 REGISTER HANDLER DI SINI
+  registerWhatsAppHandler(sock);
 }
 
 startWhatsApp();
 
-// API kirim pesan
+// ================= API =================
+
+// kirim text
 app.post("/send", async (req, res) => {
   try {
     const { to, message } = req.body;
@@ -218,7 +100,7 @@ app.post("/send", async (req, res) => {
   }
 });
 
-// API kirim file
+// kirim file
 app.post("/send-file", upload.single("file"), async (req, res) => {
   const { to, message } = req.body;
   const file = req.file;
@@ -249,7 +131,6 @@ app.post("/send-file", upload.single("file"), async (req, res) => {
   const jid = cleanNumber + "@s.whatsapp.net";
 
   try {
-    // Cek apakah nomor ada di WhatsApp
     const [result] = await sock.onWhatsApp(jid);
 
     if (!result?.exists) {
@@ -259,7 +140,6 @@ app.post("/send-file", upload.single("file"), async (req, res) => {
       });
     }
 
-    // Jika hanya kirim text
     if (!file) {
       await sock.sendMessage(jid, { text: message });
 
@@ -270,37 +150,14 @@ app.post("/send-file", upload.single("file"), async (req, res) => {
       });
     }
 
-    // Jika kirim file
     const buffer = await fs.promises.readFile(file.path);
 
-    let mediaPayload;
-
-    if (file.mimetype.startsWith("image/")) {
-      mediaPayload = {
-        image: buffer,
-        caption: message || "",
-      };
-    } else if (file.mimetype.startsWith("video/")) {
-      mediaPayload = {
-        video: buffer,
-        caption: message || "",
-      };
-    } else if (file.mimetype === "application/pdf") {
-      mediaPayload = {
-        document: buffer,
-        mimetype: "application/pdf",
-        fileName: file.originalname,
-        caption: message || "",
-      };
-    } else {
-      // default kirim sebagai document
-      mediaPayload = {
-        document: buffer,
-        mimetype: file.mimetype,
-        fileName: file.originalname,
-        caption: message || "",
-      };
-    }
+    const mediaPayload = {
+      document: buffer,
+      mimetype: file.mimetype,
+      fileName: file.originalname,
+      caption: message || "",
+    };
 
     await sock.sendMessage(jid, mediaPayload);
 
@@ -308,16 +165,14 @@ app.post("/send-file", upload.single("file"), async (req, res) => {
       success: true,
       to: cleanNumber,
       type: "file",
-      fileName: file.originalname,
     });
   } catch (err) {
-    console.error("Gagal kirim:", err);
+    console.error(err);
     return res.status(500).json({
       success: false,
-      message: "Gagal mengirim pesan",
+      message: "Gagal kirim",
     });
   } finally {
-    // Hapus file setelah selesai
     if (file && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
     }
