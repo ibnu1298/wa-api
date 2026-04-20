@@ -20,6 +20,22 @@ const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
+function parseMessage(text) {
+  const type = text[0];
+
+  if (type !== "+" && type !== "-") return null;
+
+  const content = text.slice(1);
+  const [item, nominal] = content.split(",");
+
+  if (!item || !nominal) return null;
+
+  return {
+    item: item.trim(),
+    nominal: parseInt(nominal.trim()),
+    type: type === "+" ? "pemasukan" : "pengeluaran",
+  };
+}
 async function startWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState("session");
   const { version } = await fetchLatestBaileysVersion();
@@ -57,6 +73,44 @@ async function startWhatsApp() {
 
     if (connection === "open") {
       console.log("✅ WhatsApp connected");
+    }
+  });
+
+  sock.ev.on("messages.upsert", async ({ messages }) => {
+    try {
+      const msg = messages[0];
+
+      if (!msg.message) return;
+      if (msg.key.fromMe) return;
+
+      const jid = msg.key.remoteJid;
+
+      // hanya chat pribadi
+      if (!jid.endsWith("@s.whatsapp.net")) return;
+
+      const text =
+        msg.message.conversation || msg.message.extendedTextMessage?.text;
+
+      if (!text) return;
+
+      console.log("📩 Incoming:", text);
+
+      const parsed = parseMessage(text);
+
+      if (!parsed) {
+        await sock.sendMessage(jid, {
+          text: "Format salah.\nContoh:\n+beli kopi,10000",
+        });
+        return;
+      }
+
+      //await saveToSheet(parsed);
+      console.log(parsed);
+      await sock.sendMessage(jid, {
+        text: "✅ Data keuangan berhasil dicatat",
+      });
+    } catch (err) {
+      console.error("Error handle message:", err);
     }
   });
 }
