@@ -211,7 +211,6 @@ async function createPieChart(sheets, sheetName) {
                       ],
                     },
                   },
-                  pieSliceText: "PERCENTAGE",
                 },
               },
               position: {
