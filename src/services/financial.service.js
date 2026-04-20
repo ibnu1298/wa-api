@@ -157,6 +157,80 @@ async function applyCategoryColors(sheets, sheetName) {
     requestBody: { requests },
   });
 }
+
+async function createPieChart(sheets, sheetName) {
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
+
+  const sheet = res.data.sheets.find((s) => s.properties.title === sheetName);
+
+  const sheetId = sheet.properties.sheetId;
+
+  const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
+
+  const endRow = categories.length + 1;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          addChart: {
+            chart: {
+              spec: {
+                title: "Pengeluaran per Kategori",
+                pieChart: {
+                  legendPosition: "RIGHT_LEGEND",
+                  domain: {
+                    sourceRange: {
+                      sources: [
+                        {
+                          sheetId,
+                          startRowIndex: 1, // H2
+                          endRowIndex: endRow,
+                          startColumnIndex: 7, // H
+                          endColumnIndex: 8,
+                        },
+                      ],
+                    },
+                  },
+                  series: {
+                    sourceRange: {
+                      sources: [
+                        {
+                          sheetId,
+                          startRowIndex: 1,
+                          endRowIndex: endRow,
+                          startColumnIndex: 8, // I
+                          endColumnIndex: 9,
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              position: {
+                overlayPosition: {
+                  anchorCell: {
+                    sheetId,
+                    rowIndex: 0,
+                    columnIndex: 9, // kolom J
+                  },
+                  offsetXPixels: 20,
+                  offsetYPixels: 20,
+                  widthPixels: 400,
+                  heightPixels: 300,
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
+  });
+}
+
 async function getSheetList(sheets) {
   const res = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -181,6 +255,7 @@ async function saveToSheet(data, senderNumber) {
   // 🔥 pastikan sheet ada
   await createSheetIfNotExists(sheets, sheetName);
   await applyCategoryColors(sheets, sheetName);
+  await createPieChart(sheets, sheetName);
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:F`,
