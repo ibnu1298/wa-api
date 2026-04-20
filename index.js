@@ -78,6 +78,7 @@ async function startWhatsApp() {
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     try {
+      console.log("MASUK EVENT");
       const msg = messages[0];
 
       if (!msg.message) return;
