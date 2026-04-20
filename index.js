@@ -88,6 +88,8 @@ async function startWhatsApp() {
       if (msg.key.fromMe) return;
 
       const jid = msg.key.remoteJid;
+      console.log(`jid ==> ${jid}`);
+
       console.log(`jid-> ${!jid.endsWith("@s.whatsapp.net")}`);
 
       // hanya chat pribadi
