@@ -35,37 +35,16 @@ async function saveToSheet(data) {
     auth: client,
   });
 
-  const now = new Date();
-
-  const options = { timeZone: "Asia/Jakarta" };
-
-  const parts = new Intl.DateTimeFormat("id-ID", {
-    ...options,
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).formatToParts(now);
-
-  const time = new Intl.DateTimeFormat("id-ID", {
-    ...options,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  })
-    .format(now)
-    .replace(/\./g, ":");
-
-  const date = `${parts[0].value} ${parts[2].value} ${parts[4].value}`;
-
-  const finalDate = `${date}, ${time}`;
+  const now = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: "Sheet1!A:E",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [[finalDate, data.item, data.nominal, data.type, "WA BOT"]],
+      values: [[now, data.item, data.nominal, data.type, "WA BOT"]],
     },
   });
 }
