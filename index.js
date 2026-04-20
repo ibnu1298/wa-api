@@ -38,9 +38,7 @@ async function saveToSheet(data) {
   const now = new Date().toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
   });
-  const categories = process.env.CATEGORIES.split(",").map((c) =>
-    c.trim().toLowerCase(),
-  );
+
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: "ReportSheet!A:F",
@@ -142,6 +140,10 @@ async function startWhatsApp() {
       console.log("📩 Incoming:", text);
 
       const parsed = parseMessage(cleanText);
+
+      const categories = process.env.CATEGORIES.split(",").map((c) =>
+        c.trim().toLowerCase(),
+      );
 
       if (!parsed) {
         await sock.sendMessage(jid, {
