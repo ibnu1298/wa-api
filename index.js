@@ -38,13 +38,17 @@ async function saveToSheet(data) {
   const now = new Date().toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
   });
-
+  const categories = process.env.CATEGORIES.split(",").map((c) =>
+    c.trim().toLowerCase(),
+  );
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: "Sheet1!A:E",
+    range: "ReportSheet!A:F",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [[now, data.item, data.nominal, data.type, "WA BOT"]],
+      values: [
+        [now, data.category, data.item, data.nominal, data.type, "WA BOT"],
+      ],
     },
   });
 }
@@ -54,13 +58,14 @@ function parseMessage(text) {
   if (type !== "+" && type !== "-") return null;
 
   const content = text.slice(1);
-  const [item, nominal] = content.split(",");
+  const [item, nominal, category] = content.split(",");
 
-  if (!item || !nominal) return null;
+  if (!item || !nominal || !category) return null;
 
   return {
     item: item.trim(),
     nominal: parseInt(nominal.trim()),
+    category: category.trim().toLowerCase(),
     type: type === "+" ? "pemasukan" : "pengeluaran",
   };
 }
@@ -140,7 +145,15 @@ async function startWhatsApp() {
 
       if (!parsed) {
         await sock.sendMessage(jid, {
-          text: "Format salah.\nContoh:\nlapor +beli kopi,10000",
+          text: "Format salah.\nContoh:\nlapor +beli kopi,10000,makan",
+        });
+        return;
+      }
+      if (!categories.includes(parsed.category)) {
+        const list = categories.map((c) => `- ${c}`).join("\n");
+
+        await sock.sendMessage(jid, {
+          text: `❌ Kategori tidak valid.\n\nKategori tersedia:\n${list}`,
         });
         return;
       }
