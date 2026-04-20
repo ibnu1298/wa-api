@@ -72,6 +72,8 @@ async function createSheetIfNotExists(sheets, sheetName) {
       values: categoryRows,
     },
   });
+  await applyCategoryColors(sheets, sheetName);
+  await createPieChart(sheets, sheetName);
 }
 async function applyCategoryColors(sheets, sheetName) {
   const res = await sheets.spreadsheets.get({
@@ -255,8 +257,6 @@ async function saveToSheet(data, senderNumber) {
 
   // 🔥 pastikan sheet ada
   await createSheetIfNotExists(sheets, sheetName);
-  await applyCategoryColors(sheets, sheetName);
-  await createPieChart(sheets, sheetName);
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:F`,
