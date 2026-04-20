@@ -91,10 +91,10 @@ async function startWhatsApp() {
       console.log(`jid ==> ${jid}`);
 
       console.log(`jid-> ${!jid.endsWith("@s.whatsapp.net")}`);
+      const isPrivate = jid.includes("@s.whatsapp.net") || jid.includes("@lid");
 
       // hanya chat pribadi
-      if (!jid.endsWith("@s.whatsapp.net")) return;
-
+      if (!isPrivate) return;
       const text =
         msg.message.conversation || msg.message.extendedTextMessage?.text;
       console.log(`text - ${text}`);
