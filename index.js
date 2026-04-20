@@ -7,19 +7,45 @@ const {
 } = require("@whiskeysockets/baileys");
 const P = require("pino");
 const QRCode = require("qrcode-terminal");
-
+require("dotenv").config();
 const app = express();
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const { google } = require("googleapis");
 app.use(express.json());
 
+const auth = new google.auth.GoogleAuth({
+  keyFile: "credentials.json",
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 let sock;
 let isReady = false;
 const upload = multer({
   dest: "uploads/",
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
+async function saveToSheet(data) {
+  const client = await auth.getClient();
+
+  const sheets = google.sheets({
+    version: "v4",
+    auth: client,
+  });
+
+  const now = new Date().toLocaleString("id-ID");
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Sheet1!A:E",
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[now, data.item, data.nominal, data.type, "WA BOT"]],
+    },
+  });
+}
 function parseMessage(text) {
   const type = text[0];
 
@@ -117,7 +143,17 @@ async function startWhatsApp() {
         return;
       }
 
-      //await saveToSheet(parsed);
+      try {
+        await saveToSheet(parsed);
+      } catch (err) {
+        console.error("Gagal save:", err);
+
+        await sock.sendMessage(jid, {
+          text: "❌ Gagal simpan ke Google Sheets",
+        });
+
+        return;
+      }
       console.log(parsed);
       await sock.sendMessage(jid, {
         text: "✅ Data keuangan berhasil dicatat",
