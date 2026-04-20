@@ -78,36 +78,41 @@ async function startWhatsApp() {
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     try {
-      console.log("MASUK EVENT");
       const msg = messages[0];
-      console.log(`INI MESSAGE : ${msg}`);
 
       if (!msg.message) return;
-      console.log(`msg.key.fromMe-${msg.key.fromMe}`);
 
       if (msg.key.fromMe) return;
 
       const jid = msg.key.remoteJid;
-      console.log(`jid ==> ${jid}`);
-
-      console.log(`jid-> ${!jid.endsWith("@s.whatsapp.net")}`);
       const isPrivate = jid.includes("@s.whatsapp.net") || jid.includes("@lid");
 
       // hanya chat pribadi
       if (!isPrivate) return;
       const text =
-        msg.message.conversation || msg.message.extendedTextMessage?.text;
-      console.log(`text - ${text}`);
+        msg.message?.conversation ||
+        msg.message?.extendedTextMessage?.text ||
+        msg.message?.ephemeralMessage?.message?.extendedTextMessage?.text;
 
+      if (!text) return;
+
+      // normalize
+      const lowerText = text.toLowerCase();
+
+      // cek prefix
+      if (!lowerText.startsWith("lapor")) return;
+
+      // ambil isi setelah "lapor"
+      const cleanText = text.slice(5).trim(); // 5 = panjang "lapor"
       if (!text) return;
 
       console.log("📩 Incoming:", text);
 
-      const parsed = parseMessage(text);
+      const parsed = parseMessage(cleanText);
 
       if (!parsed) {
         await sock.sendMessage(jid, {
-          text: "Format salah.\nContoh:\n+beli kopi,10000",
+          text: "Format salah.\nContoh:\nlapor +beli kopi,10000",
         });
         return;
       }
