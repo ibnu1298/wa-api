@@ -73,7 +73,90 @@ async function createSheetIfNotExists(sheets, sheetName) {
     },
   });
 }
+async function applyCategoryColors(sheets, sheetName) {
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
 
+  const sheet = res.data.sheets.find((s) => s.properties.title === sheetName);
+
+  const sheetId = sheet.properties.sheetId;
+
+  const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
+
+  // warna random per kategori
+  function getColor(index) {
+    const colors = [
+      { red: 1, green: 0.8, blue: 0.8 },
+      { red: 0.8, green: 1, blue: 0.8 },
+      { red: 0.8, green: 0.8, blue: 1 },
+      { red: 1, green: 1, blue: 0.8 },
+      { red: 0.9, green: 0.8, blue: 1 },
+    ];
+    return colors[index % colors.length];
+  }
+
+  const requests = [];
+
+  categories.forEach((cat, i) => {
+    const color = getColor(i);
+
+    // kolom B (data)
+    requests.push({
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [
+            {
+              sheetId,
+              startColumnIndex: 1, // B
+              endColumnIndex: 2,
+            },
+          ],
+          booleanRule: {
+            condition: {
+              type: "TEXT_EQ",
+              values: [{ userEnteredValue: cat }],
+            },
+            format: {
+              backgroundColor: color,
+            },
+          },
+        },
+        index: 0,
+      },
+    });
+
+    // kolom H (kategori list)
+    requests.push({
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [
+            {
+              sheetId,
+              startColumnIndex: 7, // H
+              endColumnIndex: 8,
+            },
+          ],
+          booleanRule: {
+            condition: {
+              type: "TEXT_EQ",
+              values: [{ userEnteredValue: cat }],
+            },
+            format: {
+              backgroundColor: color,
+            },
+          },
+        },
+        index: 0,
+      },
+    });
+  });
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: { requests },
+  });
+}
 async function getSheetList(sheets) {
   const res = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -97,7 +180,7 @@ async function saveToSheet(data, senderNumber) {
 
   // 🔥 pastikan sheet ada
   await createSheetIfNotExists(sheets, sheetName);
-
+  await applyCategoryColors(sheets, sheetName);
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!A:F`,
