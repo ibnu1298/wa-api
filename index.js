@@ -38,18 +38,23 @@ async function saveToSheet(data) {
   const now = new Date().toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
   });
-
+  const senderNumber = extractNumber(jid);
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: "ReportSheet!A:F",
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
-        [now, data.category, data.item, data.nominal, data.type, "WA BOT"],
+        [now, data.category, data.item, data.nominal, data.type, senderNumber],
       ],
     },
   });
 }
+
+function extractNumber(jid) {
+  return jid.split("@")[0];
+}
+
 function parseMessage(text) {
   const type = text[0];
 
