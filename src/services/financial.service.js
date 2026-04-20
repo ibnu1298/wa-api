@@ -181,6 +181,7 @@ async function createPieChart(sheets, sheetName) {
               spec: {
                 title: "Pengeluaran per Kategori",
                 pieChart: {
+                  pieHole: 0.5,
                   legendPosition: "RIGHT_LEGEND",
                   domain: {
                     sourceRange: {
