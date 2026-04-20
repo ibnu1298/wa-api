@@ -35,7 +35,9 @@ async function saveToSheet(data) {
     auth: client,
   });
 
-  const now = new Date().toLocaleString("id-ID");
+  const now = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
