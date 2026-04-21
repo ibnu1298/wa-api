@@ -5,5 +5,15 @@ function extractNumber(jid) {
 function getCategories() {
   return process.env.CATEGORIES.split(",").map((c) => c.trim().toLowerCase());
 }
+function getSheetName() {
+  const now = new Date();
 
-module.exports = { extractNumber, getCategories };
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    month: "short",
+    year: "numeric",
+  })
+    .format(now)
+    .replace(" ", "-"); // contoh: Apr-2026
+}
+module.exports = { extractNumber, getCategories, getSheetName };

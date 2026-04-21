@@ -1,22 +1,12 @@
 const { google } = require("googleapis");
-
+const { getSheetName } = require("../../utils/helper");
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-function getSheetName() {
-  const now = new Date();
 
-  return new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    month: "short",
-    year: "numeric",
-  })
-    .format(now)
-    .replace(" ", "-"); // contoh: Apr-2026
-}
 async function createSheetIfNotExists(sheets, sheetName) {
   const existingSheets = await getSheetList(sheets);
 

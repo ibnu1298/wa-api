@@ -1,5 +1,5 @@
 const { parseMessage } = require("../../utils/parser");
-const { getCategories } = require("../../utils/helper");
+const { getCategories, getSheetName } = require("../../utils/helper");
 const { saveToSheet } = require("../../services/financial.service");
 
 async function handleLapor(sock, jid, text, msg) {
