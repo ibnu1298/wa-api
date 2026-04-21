@@ -4,8 +4,8 @@ const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
-const client = await auth.getClient();
 async function handleRekap(sock, jid, text, msg) {
+  const client = await auth.getClient();
   const sheetName = getSheetName();
   const sheets = google.sheets({
     version: "v4",
