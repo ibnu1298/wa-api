@@ -85,23 +85,32 @@ async function applyCategoryColors(sheets, sheetName) {
   const sheetId = sheet.properties.sheetId;
 
   const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
+  const hexColors = [
+    "#FF6B6B", // merah
+    "#4ECDC4", // teal
+    "#FFD93D", // kuning
+    "#1A73E8", // biru
+    "#A29BFE", // ungu
+    "#FD9644", // orange
+    "#2ECC71", // hijau
+    "#E84393", // pink
+    "#7d048d", // violet
+    "#95A5A6", // abu
+  ];
+  function hexToRgb(hex) {
+    const bigint = parseInt(hex.replace("#", ""), 16);
 
-  // warna random per kategori
-  function getColor(index) {
-    const colors = [
-      { red: 1, green: 0.8, blue: 0.8 },
-      { red: 0.8, green: 1, blue: 0.8 },
-      { red: 0.8, green: 0.8, blue: 1 },
-      { red: 1, green: 1, blue: 0.8 },
-      { red: 0.9, green: 0.8, blue: 1 },
-    ];
-    return colors[index % colors.length];
+    return {
+      red: ((bigint >> 16) & 255) / 255,
+      green: ((bigint >> 8) & 255) / 255,
+      blue: (bigint & 255) / 255,
+    };
   }
 
   const requests = [];
 
   categories.forEach((cat, i) => {
-    const color = getColor(i);
+    const color = hexToRgb(hexColors[i % hexColors.length]);
 
     // kolom B (data)
     requests.push({
@@ -253,7 +262,15 @@ async function saveToSheet(data, senderNumber) {
   });
 
   const sheetName = getSheetName();
+  const rawCategories = process.env.CATEGORIES.split(",");
+  const categoryMap = {};
 
+  // contoh:
+  // "Makan" → key: "makan", value: "Makan"
+  rawCategories.forEach((cat) => {
+    categoryMap[cat.trim().toLowerCase()] = cat.trim();
+  });
+  const displayCategory = categoryMap[data.category] || data.category;
   // 🔥 pastikan sheet ada
   await createSheetIfNotExists(sheets, sheetName);
   await sheets.spreadsheets.values.append({
@@ -262,7 +279,14 @@ async function saveToSheet(data, senderNumber) {
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
-        [now, data.category, data.item, data.nominal, data.type, senderNumber],
+        [
+          now,
+          displayCategory,
+          data.item,
+          data.nominal,
+          data.type,
+          senderNumber,
+        ],
       ],
     },
   });

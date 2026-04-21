@@ -12,8 +12,16 @@ async function handleLapor(sock, jid, text, msg) {
     });
     return;
   }
+  const rawCategories = process.env.CATEGORIES.split(",");
 
-  if (!categories.includes(parsed.category)) {
+  const categoryMap = {};
+
+  // contoh:
+  // "Makan" → key: "makan", value: "Makan"
+  rawCategories.forEach((cat) => {
+    categoryMap[cat.trim().toLowerCase()] = cat.trim();
+  });
+  if (!categoryMap[parsed.category]) {
     const list = categories.map((c) => `- ${c}`).join("\n");
 
     await sock.sendMessage(jid, {
