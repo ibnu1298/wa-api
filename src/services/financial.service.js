@@ -282,4 +282,4 @@ async function saveToSheet(data, senderNumber) {
   });
 }
 
-module.exports = { saveToSheet };
+module.exports = { saveToSheet, createSheetIfNotExists };
