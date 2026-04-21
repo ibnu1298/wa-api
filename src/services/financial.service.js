@@ -176,7 +176,7 @@ async function applyCategoryColors(sheets, sheetName) {
                 backgroundColor: color,
                 textFormat: {
                   bold: true,
-                  foregroundColor: { red: 1, green: 1, blue: 1 }, // putih
+                  foregroundColor: { red: 0, green: 0, blue: 0 }, // hitam
                 },
                 horizontalAlignment: "CENTER",
               },
@@ -198,15 +198,15 @@ async function applyCategoryColors(sheets, sheetName) {
               sheetId,
               startRowIndex: 0, // row 1
               endRowIndex: 1,
-              startColumnIndex: 1, // H
-              endColumnIndex: 6, // sampai J
+              startColumnIndex: 0, // A
+              endColumnIndex: 6, // sampai F
             },
             cell: {
               userEnteredFormat: {
                 backgroundColor: color,
                 textFormat: {
                   bold: true,
-                  foregroundColor: { red: 1, green: 1, blue: 1 }, // putih
+                  foregroundColor: { red: 0, green: 0, blue: 0 }, // HITAM
                 },
                 horizontalAlignment: "CENTER",
               },
