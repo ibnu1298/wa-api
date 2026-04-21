@@ -16,4 +16,18 @@ function getSheetName() {
     .format(now)
     .replace(" ", "-"); // contoh: Apr-2026
 }
-module.exports = { extractNumber, getCategories, getSheetName };
+async function getSheetIdByName(sheets, sheetName) {
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+  });
+
+  const sheet = res.data.sheets.find((s) => s.properties.title === sheetName);
+
+  return sheet?.properties?.sheetId;
+}
+module.exports = {
+  extractNumber,
+  getCategories,
+  getSheetName,
+  getSheetIdByName,
+};

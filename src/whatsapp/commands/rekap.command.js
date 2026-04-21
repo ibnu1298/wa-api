@@ -1,6 +1,7 @@
-const { getSheetName } = require("../../utils/helper");
+const { getSheetName, getSheetIdByName } = require("../../utils/helper");
 
 async function handleRekap(sock, jid, text, msg) {
+  const sheetName = getSheetName();
   const sheets = google.sheets({
     version: "v4",
     auth: client,
@@ -15,14 +16,5 @@ async function handleRekap(sock, jid, text, msg) {
     text: `📊 Rekap bulan ini (${sheetName}):\n${link}`,
   });
 }
-const sheetName = getSheetName();
-async function getSheetIdByName(sheets, sheetName) {
-  const res = await sheets.spreadsheets.get({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-  });
 
-  const sheet = res.data.sheets.find((s) => s.properties.title === sheetName);
-
-  return sheet?.properties?.sheetId;
-}
 module.exports = { handleRekap };
