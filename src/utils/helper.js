@@ -26,9 +26,20 @@ async function getSheetIdByName(sheets, sheetName) {
 
   return sheet?.properties?.sheetId;
 }
+function hexToRgb(hex) {
+  const bigint = parseInt(hex.replace("#", ""), 16);
+
+  return {
+    red: ((bigint >> 16) & 255) / 255,
+    green: ((bigint >> 8) & 255) / 255,
+    blue: (bigint & 255) / 255,
+  };
+}
+
 module.exports = {
   extractNumber,
   getCategories,
   getSheetName,
   getSheetIdByName,
+  hexToRgb,
 };

@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const { getSheetName } = require("../utils/helper");
+const { getSheetName, hexToRgb } = require("../utils/helper");
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -47,10 +47,10 @@ async function createSheetIfNotExists(sheets, sheetName) {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!H1:I1`,
+    range: `${sheetName}!H1:J1`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Kategori", "Pengeluaran"]],
+      values: [["Kategori", "Pengeluaran", "Total"]],
     },
   });
 
@@ -60,6 +60,14 @@ async function createSheetIfNotExists(sheets, sheetName) {
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: categoryRows,
+    },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetName}!J2`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [["=SUM(I2:I)"]],
     },
   });
   await applyCategoryColors(sheets, sheetName);
@@ -87,15 +95,6 @@ async function applyCategoryColors(sheets, sheetName) {
     "#7d048d", // violet
     "#95A5A6", // abu
   ];
-  function hexToRgb(hex) {
-    const bigint = parseInt(hex.replace("#", ""), 16);
-
-    return {
-      red: ((bigint >> 16) & 255) / 255,
-      green: ((bigint >> 8) & 255) / 255,
-      blue: (bigint & 255) / 255,
-    };
-  }
 
   const requests = [];
 
@@ -156,6 +155,68 @@ async function applyCategoryColors(sheets, sheetName) {
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: { requests },
+  });
+  const color = hexToRgb("#ffff00"); // biru
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0, // row 1
+              endRowIndex: 1,
+              startColumnIndex: 7, // H
+              endColumnIndex: 10, // sampai J
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: color,
+                textFormat: {
+                  bold: true,
+                  foregroundColor: { red: 1, green: 1, blue: 1 }, // putih
+                },
+                horizontalAlignment: "CENTER",
+              },
+            },
+            fields:
+              "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+          },
+        },
+      ],
+    },
+  });
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0, // row 1
+              endRowIndex: 1,
+              startColumnIndex: 1, // H
+              endColumnIndex: 6, // sampai J
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: color,
+                textFormat: {
+                  bold: true,
+                  foregroundColor: { red: 1, green: 1, blue: 1 }, // putih
+                },
+                horizontalAlignment: "CENTER",
+              },
+            },
+            fields:
+              "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+          },
+        },
+      ],
+    },
   });
 }
 
