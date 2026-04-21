@@ -89,7 +89,7 @@ async function applyCategoryColors(sheets, sheetName) {
     "#FF6B6B", // merah
     "#4ECDC4", // teal
     "#FFD93D", // kuning
-    "#1A73E8", // biru
+    "#458be7", // biru
     "#A29BFE", // ungu
     "#FD9644", // orange
     "#2ECC71", // hijau
