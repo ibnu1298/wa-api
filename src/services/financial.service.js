@@ -218,6 +218,14 @@ async function createPieChart(sheets, sheetName) {
                       ],
                     },
                   },
+                  slices: [
+                    {
+                      color: { red: 1, green: 0, blue: 0 }, // merah
+                    },
+                    {
+                      color: { red: 0, green: 1, blue: 0 }, // hijau
+                    },
+                  ],
                   threeDimensional: true,
                 },
               },
