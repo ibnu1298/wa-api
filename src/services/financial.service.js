@@ -211,6 +211,7 @@ async function createPieChart(sheets, sheetName) {
                       ],
                     },
                   },
+                  threeDimensional: true,
                 },
               },
               position: {
