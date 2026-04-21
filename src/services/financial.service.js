@@ -169,8 +169,6 @@ async function createPieChart(sheets, sheetName) {
 
   const sheetId = sheet.properties.sheetId;
 
-  const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
-
   const endRow = categories.length + 1;
   const colorMap = {
     makan: { red: 1, green: 0.6, blue: 0.6 },
