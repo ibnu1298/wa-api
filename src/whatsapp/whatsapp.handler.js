@@ -7,6 +7,14 @@ function registerWhatsAppHandler(sock) {
 
       if (!msg.message) return;
       if (msg.key.fromMe) return;
+      const contact = await msg.getContact();
+
+      const data = {
+        name: contact.pushname || contact.name || "Unknown",
+        number: contact.number,
+      };
+      console.log(`data.name : ${data.name}`);
+      console.log(`data.number : ${data.number}`);
 
       const jid = msg.key.remoteJid;
 
