@@ -23,7 +23,17 @@ async function handleLapor(sock, jid, text, msg) {
   }
 
   const senderNumber = msg.key.participant || msg.key.remoteJid;
+  let number = "";
 
+  if (msg.author) {
+    number = msg.author;
+  } else {
+    number = msg.from;
+  }
+  console.log(`number ${number}`);
+
+  // normalize
+  number = number.split("@")[0];
   try {
     await saveToSheet(parsed, senderNumber.split("@")[0]);
   } catch (err) {
