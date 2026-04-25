@@ -7,17 +7,6 @@ function registerWhatsAppHandler(sock) {
 
       if (!msg.message) return;
       if (msg.key.fromMe) return;
-      let number = "";
-
-      if (msg.author) {
-        number = msg.author;
-      } else {
-        number = msg.from;
-      }
-
-      // normalize
-      number = number.split("@")[0];
-      console.log(`number: ${number}`);
 
       const jid = msg.key.remoteJid;
 
