@@ -1,4 +1,5 @@
 const { routeCommand } = require("./command.router");
+const { isUserAllowed, getSenderNumber } = require("../utils/helper");
 
 function registerWhatsAppHandler(sock) {
   sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -9,8 +10,6 @@ function registerWhatsAppHandler(sock) {
       if (msg.key.fromMe) return;
 
       const jid = msg.key.remoteJid;
-      console.log(`remoteJid : ${msg.key.remoteJid}`);
-      console.log(`participant : ${msg.key.participant}`);
 
       const isPrivate = jid.includes("@s.whatsapp.net") || jid.includes("@lid");
 
@@ -25,6 +24,17 @@ function registerWhatsAppHandler(sock) {
 
       console.log("📩 Incoming:", text);
 
+      // 🔒 cek whitelist
+
+      const senderNumber = getSenderNumber(sock, msg);
+      console.log(`senderNumber : ${getSenderNumber}`);
+
+      const allowed = await isUserAllowed(senderNumber);
+
+      if (!allowed) {
+        console.log("⛔ Not allowed:", senderNumber);
+        return;
+      }
       // 🔥 langsung lempar ke router
       await routeCommand(sock, jid, text, msg);
     } catch (err) {

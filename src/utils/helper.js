@@ -1,3 +1,33 @@
+const { google } = require("googleapis");
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+
+const sheets = google.sheets({ version: "v4", auth });
+
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+
+function getSenderNumber(sock, msg) {
+  const jid = sock.decodeJid(msg.key.participant || msg.key.remoteJid);
+
+  return jid.split("@")[0];
+}
+async function isUserAllowed(number) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Data-User!B2:B",
+  });
+
+  const rows = res.data.values || [];
+
+  // flatten jadi array nomor
+  const allowedNumbers = rows.map((r) => r[0]);
+
+  return allowedNumbers.includes(number);
+}
+
 function extractNumber(jid) {
   return jid.split("@")[0];
 }
@@ -42,4 +72,6 @@ module.exports = {
   getSheetName,
   getSheetIdByName,
   hexToRgb,
+  isUserAllowed,
+  getSenderNumber,
 };
