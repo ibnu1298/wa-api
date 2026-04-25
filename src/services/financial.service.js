@@ -1,22 +1,12 @@
 const { google } = require("googleapis");
-
+const { getSheetName, hexToRgb } = require("../utils/helper");
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-function getSheetName() {
-  const now = new Date();
 
-  return new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    month: "short",
-    year: "numeric",
-  })
-    .format(now)
-    .replace(" ", "-"); // contoh: Apr-2026
-}
 async function createSheetIfNotExists(sheets, sheetName) {
   const existingSheets = await getSheetList(sheets);
 
@@ -57,10 +47,10 @@ async function createSheetIfNotExists(sheets, sheetName) {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!H1:I1`,
+    range: `${sheetName}!H1:J1`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Kategori", "Pengeluaran"]],
+      values: [["Kategori", "Pengeluaran", "Total"]],
     },
   });
 
@@ -70,6 +60,14 @@ async function createSheetIfNotExists(sheets, sheetName) {
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: categoryRows,
+    },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetName}!J2`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [["=SUM(I2:I)"]],
     },
   });
   await applyCategoryColors(sheets, sheetName);
@@ -85,23 +83,23 @@ async function applyCategoryColors(sheets, sheetName) {
   const sheetId = sheet.properties.sheetId;
 
   const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
-
-  // warna random per kategori
-  function getColor(index) {
-    const colors = [
-      { red: 1, green: 0.8, blue: 0.8 },
-      { red: 0.8, green: 1, blue: 0.8 },
-      { red: 0.8, green: 0.8, blue: 1 },
-      { red: 1, green: 1, blue: 0.8 },
-      { red: 0.9, green: 0.8, blue: 1 },
-    ];
-    return colors[index % colors.length];
-  }
+  const hexColors = [
+    "#FF6B6B", // merah
+    "#4ECDC4", // teal
+    "#FFD93D", // kuning
+    "#458be7", // biru
+    "#A29BFE", // ungu
+    "#FD9644", // orange
+    "#2ECC71", // hijau
+    "#E84393", // pink
+    "#7d048d", // violet
+    "#95A5A6", // abu
+  ];
 
   const requests = [];
 
   categories.forEach((cat, i) => {
-    const color = getColor(i);
+    const color = hexToRgb(hexColors[i % hexColors.length]);
 
     // kolom B (data)
     requests.push({
@@ -158,6 +156,68 @@ async function applyCategoryColors(sheets, sheetName) {
     spreadsheetId: SPREADSHEET_ID,
     requestBody: { requests },
   });
+  const color = hexToRgb("#ffff00"); // biru
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0, // row 1
+              endRowIndex: 1,
+              startColumnIndex: 7, // H
+              endColumnIndex: 10, // sampai J
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: color,
+                textFormat: {
+                  bold: true,
+                  foregroundColor: { red: 0, green: 0, blue: 0 }, // hitam
+                },
+                horizontalAlignment: "CENTER",
+              },
+            },
+            fields:
+              "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+          },
+        },
+      ],
+    },
+  });
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0, // row 1
+              endRowIndex: 1,
+              startColumnIndex: 0, // A
+              endColumnIndex: 6, // sampai F
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor: color,
+                textFormat: {
+                  bold: true,
+                  foregroundColor: { red: 0, green: 0, blue: 0 }, // HITAM
+                },
+                horizontalAlignment: "CENTER",
+              },
+            },
+            fields:
+              "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+          },
+        },
+      ],
+    },
+  });
 }
 
 async function createPieChart(sheets, sheetName) {
@@ -168,21 +228,9 @@ async function createPieChart(sheets, sheetName) {
   const sheet = res.data.sheets.find((s) => s.properties.title === sheetName);
 
   const sheetId = sheet.properties.sheetId;
-
+  const categories = process.env.CATEGORIES.split(",").map((c) => c.trim());
   const endRow = categories.length + 1;
-  const colorMap = {
-    makan: { red: 1, green: 0.6, blue: 0.6 },
-    jajan: { red: 1, green: 1, blue: 0.4 },
-    motor: { red: 0.6, green: 0.6, blue: 1 },
-    belanja: { red: 0.6, green: 1, blue: 0.6 },
-    "lain-lain": { red: 0.9, green: 0.9, blue: 0.9 },
-  };
-  const categories = process.env.CATEGORIES.split(",").map((c) =>
-    c.trim().toLowerCase(),
-  );
-  const slices = categories.map((cat) => ({
-    color: colorMap[cat] || { red: 0.8, green: 0.8, blue: 0.8 },
-  }));
+
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
@@ -222,7 +270,6 @@ async function createPieChart(sheets, sheetName) {
                     },
                   },
                   threeDimensional: true,
-                  slices: slices,
                 },
               },
               position: {
@@ -266,7 +313,15 @@ async function saveToSheet(data, senderNumber) {
   });
 
   const sheetName = getSheetName();
+  const rawCategories = process.env.CATEGORIES.split(",");
+  const categoryMap = {};
 
+  // contoh:
+  // "Makan" → key: "makan", value: "Makan"
+  rawCategories.forEach((cat) => {
+    categoryMap[cat.trim().toLowerCase()] = cat.trim();
+  });
+  const displayCategory = categoryMap[data.category] || data.category;
   // 🔥 pastikan sheet ada
   await createSheetIfNotExists(sheets, sheetName);
   await sheets.spreadsheets.values.append({
@@ -275,10 +330,17 @@ async function saveToSheet(data, senderNumber) {
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
-        [now, data.category, data.item, data.nominal, data.type, senderNumber],
+        [
+          now,
+          displayCategory,
+          data.item,
+          data.nominal,
+          data.type,
+          senderNumber,
+        ],
       ],
     },
   });
 }
 
-module.exports = { saveToSheet };
+module.exports = { saveToSheet, createSheetIfNotExists };
