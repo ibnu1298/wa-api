@@ -10,7 +10,7 @@ const sheets = google.sheets({ version: "v4", auth });
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
 function getSenderNumber(sock, msg) {
-  const jid = sock.decodeJid(msg.key.participant || msg.key.remoteJid);
+  const jid = msg.key.participant || msg.key.remoteJid;
 
   return jid.split("@")[0];
 }
