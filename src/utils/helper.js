@@ -9,11 +9,6 @@ const sheets = google.sheets({ version: "v4", auth });
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
-function getSenderNumber(sock, msg) {
-  const jid = msg.key.participant || msg.key.remoteJid;
-
-  return jid.split("@")[0];
-}
 async function isUserAllowed(number) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -73,5 +68,4 @@ module.exports = {
   getSheetIdByName,
   hexToRgb,
   isUserAllowed,
-  getSenderNumber,
 };

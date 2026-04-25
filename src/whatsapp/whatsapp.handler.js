@@ -26,10 +26,10 @@ function registerWhatsAppHandler(sock) {
 
       // 🔒 cek whitelist
 
-      const senderNumber = getSenderNumber(sock, msg);
-      console.log(`senderNumber : ${getSenderNumber}`);
+      const senderNumber = msg.key.participant || msg.key.remoteJid;
+      console.log(`senderNumber : ${senderNumber.split("@")[0]}`);
 
-      const allowed = await isUserAllowed(senderNumber);
+      const allowed = await isUserAllowed(senderNumber.split("@")[0]);
 
       if (!allowed) {
         console.log("⛔ Not allowed:", senderNumber);
