@@ -62,7 +62,7 @@ async function createSheetIfNotExists(sheets, sheetName) {
       values: categoryRows,
     },
   });
-
+  const monthlyBudget = await getMonthlyBudget();
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!J1:K3`,
@@ -70,7 +70,7 @@ async function createSheetIfNotExists(sheets, sheetName) {
     requestBody: {
       values: [
         ["Total Pengeluaran", "=SUM(I2:I)"],
-        ["Budget Bulanan", getMonthlyBudget],
+        ["Budget Bulanan", monthlyBudget],
         ["Budget Harian", `=ROUND((K2-K1)/(EOMONTH(TODAY(),0)-TODAY()+1),0)`],
       ],
     },

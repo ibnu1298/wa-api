@@ -23,6 +23,15 @@ async function isUserAllowed(number) {
   return allowedNumbers.includes(number);
 }
 
+async function getMonthlyBudget() {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Data-User!C2",
+  });
+
+  return Number(res.data.values?.[0]?.[0] || 0);
+}
+
 function extractNumber(jid) {
   return jid.split("@")[0];
 }
@@ -68,4 +77,5 @@ module.exports = {
   getSheetIdByName,
   hexToRgb,
   isUserAllowed,
+  getMonthlyBudget,
 };
