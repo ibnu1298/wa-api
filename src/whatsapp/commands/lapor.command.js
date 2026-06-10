@@ -35,6 +35,7 @@ async function handleLapor(sock, jid, text, msg) {
   try {
     await saveToSheet(parsed, senderNumber.split("@")[0]);
   } catch (err) {
+    console.log(err);
     await sock.sendMessage(jid, {
       text: "❌ Gagal simpan ke Google Sheets",
     });
