@@ -47,10 +47,10 @@ async function createSheetIfNotExists(sheets, sheetName) {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!H1:J1`,
+    range: `${sheetName}!H1:I1`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Kategori", "Pengeluaran", "Total", "Budget Perhari"]],
+      values: [["Kategori", "Pengeluaran"]],
     },
   });
 
@@ -62,22 +62,15 @@ async function createSheetIfNotExists(sheets, sheetName) {
       values: categoryRows,
     },
   });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetName}!J2`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [["=SUM(I2:I)"]],
-    },
-  });
+
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetName}!J1:K3`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
-        ["Total", "=SUM(I2:I)"],
-        ["Budget Bulanan", monthlyBudget],
+        ["Total Pengeluaran", "=SUM(I2:I)"],
+        ["Budget Bulanan", getMonthlyBudget],
         ["Budget Harian", `=ROUND((K2-K1)/(EOMONTH(TODAY(),0)-TODAY()+1),0)`],
       ],
     },
