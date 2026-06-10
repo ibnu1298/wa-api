@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const { getSheetName, hexToRgb } = require("../utils/helper");
+const { getSheetName, hexToRgb, getMonthlyBudget } = require("../utils/helper");
 const auth = new google.auth.GoogleAuth({
   credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -50,7 +50,7 @@ async function createSheetIfNotExists(sheets, sheetName) {
     range: `${sheetName}!H1:J1`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["Kategori", "Pengeluaran", "Total"]],
+      values: [["Kategori", "Pengeluaran", "Total", "Budget Perhari"]],
     },
   });
 
@@ -68,6 +68,18 @@ async function createSheetIfNotExists(sheets, sheetName) {
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [["=SUM(I2:I)"]],
+    },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetName}!J1:K3`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [
+        ["Total", "=SUM(I2:I)"],
+        ["Budget Bulanan", monthlyBudget],
+        ["Budget Harian", `=ROUND((K2-K1)/(EOMONTH(TODAY(),0)-TODAY()+1),0)`],
+      ],
     },
   });
   await applyCategoryColors(sheets, sheetName);
