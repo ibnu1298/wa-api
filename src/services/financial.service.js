@@ -223,6 +223,56 @@ async function applyCategoryColors(sheets, sheetName) {
       ],
     },
   });
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        // J1:J3 Bold + Yellow Background
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: 3,
+              startColumnIndex: 9, // J
+              endColumnIndex: 10,
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  bold: true,
+                },
+                backgroundColor: color,
+              },
+            },
+            fields: "userEnteredFormat(textFormat,backgroundColor)",
+          },
+        },
+
+        // K1:K3 Format Rupiah Indonesia
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: 3,
+              startColumnIndex: 10, // K
+              endColumnIndex: 11,
+            },
+            cell: {
+              userEnteredFormat: {
+                numberFormat: {
+                  type: "CURRENCY",
+                  pattern: '"Rp"#,##0',
+                },
+              },
+            },
+            fields: "userEnteredFormat.numberFormat",
+          },
+        },
+      ],
+    },
+  });
 }
 
 async function createPieChart(sheets, sheetName) {
