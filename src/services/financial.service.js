@@ -270,6 +270,16 @@ async function applyCategoryColors(sheets, sheetName) {
             fields: "userEnteredFormat.numberFormat",
           },
         },
+        {
+          autoResizeDimensions: {
+            dimensions: {
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: 9, // J
+              endIndex: 10,
+            },
+          },
+        },
       ],
     },
   });
